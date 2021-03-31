@@ -1,0 +1,52 @@
+window.addEventListener("load", function () {
+  var SelfService;
+  var selfServiceString = sessionStorage.getItem("SelfService");
+  if (selfServiceString === null) {
+    SelfService = [];
+  } else {
+    SelfService = JSON.parse(selfServiceString);
+    if (SelfService.length === 10) {
+      SelfService.pop();
+    }
+  }
+  var navigation = {
+    title: document.title,
+    url: window.location.href,
+    starttime: new Date().toISOString(),
+  };
+  SelfService.unshift(navigation);
+  sessionStorage.setItem("SelfService", JSON.stringify(SelfService));
+});
+
+window.addEventListener("lcw:ready", function handleLivechatReadyEvent() {
+  //Evenement appelé à chaque changement de page
+  console.log("lcw:ready");
+
+  Microsoft.Omnichannel.LiveChatWidget.SDK.removeContextProvider();
+
+  Microsoft.Omnichannel.LiveChatWidget.SDK.setContextProvider(
+    function contextProvider() {
+      var selfServiceTracked = sessionStorage.getItem("SelfService");
+      var ocSelfService = JSON.parse(selfServiceTracked);
+
+      var history = [];
+
+      for (var index = 0; index < ocSelfService.length; index++) {
+        const element = ocSelfService[index];
+
+        history.push({
+          msdyn_displaytitle: element.title,
+          msdyn_url: element.url,
+          msdyn_starttime: element.starttime,
+          msdyn_type: 192350000,
+        });
+      }
+
+      return {
+        SelfService: { value: JSON.stringify(history) },
+      };
+    }
+  );
+});
+
+console.log("chatwidgetcustomization.js");
